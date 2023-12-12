@@ -10,10 +10,12 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default'
 }
 
-export default class MyPlugin extends Plugin {
+export default class OllamaPlugin extends Plugin {
 	settings: MyPluginSettings;
 
 	async onload() {
+		await this.loadGraph();
+
 		await this.loadSettings();
 
 		// This creates an icon in the left ribbon.
@@ -86,6 +88,43 @@ export default class MyPlugin extends Plugin {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
+	async loadGraph() {
+		console.log("Loading graph");
+
+		let db;
+		const request = indexedDB.open("fb6ac0add254bde8-cache");
+
+		request.onerror = (event) => {
+			console.error("Error opening database");
+			console.error(event);
+		}
+		request.onsuccess = async (event) => {
+			console.log("Success!");
+			db = event.target.result;
+
+			// Iterate all the data in the database
+			const objectStore = await db.transaction("file").objectStore("file");
+
+			objectStore.openCursor().onsuccess = (event) => {
+				const cursor = event.target.result;
+				if (cursor) {
+					console.log("Name for SSN " + cursor.key + " is " + JSON.stringify(cursor.value));
+
+					const metadataObjectStore = db.transaction("metadata").objectStore("metadata");
+					const request = metadataObjectStore.get(cursor.value.hash)
+					request.onsuccess = (event) => {	
+						const metadata = event.target.result;
+						console.log(metadata)
+					}
+
+					cursor.continue();
+				} else {
+					console.log("No more entries!");
+				}
+			};	
+		}
+	}
+
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
@@ -108,9 +147,9 @@ class SampleModal extends Modal {
 }
 
 class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: OllamaPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: OllamaPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
