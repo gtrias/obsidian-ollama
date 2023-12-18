@@ -91,8 +91,10 @@ export default class OllamaPlugin extends Plugin {
 	async loadGraph() {
 		console.log("Loading graph");
 
+		const { appId } = window.global.app
+
 		let db;
-		const request = indexedDB.open("fb6ac0add254bde8-cache");
+		const request = indexedDB.open(`${appId}-cache`);
 
 		request.onerror = (event) => {
 			console.error("Error opening database");
@@ -112,7 +114,7 @@ export default class OllamaPlugin extends Plugin {
 
 					const metadataObjectStore = db.transaction("metadata").objectStore("metadata");
 					const request = metadataObjectStore.get(cursor.value.hash)
-					request.onsuccess = (event) => {	
+					request.onsuccess = (event) => {
 						const metadata = event.target.result;
 						console.log(metadata)
 					}
@@ -121,7 +123,7 @@ export default class OllamaPlugin extends Plugin {
 				} else {
 					console.log("No more entries!");
 				}
-			};	
+			};
 		}
 	}
 
