@@ -16,13 +16,56 @@ const DEFAULT_SETTINGS: OllamaPluginSettings = {
 	neo4jPassword: "",
 }
 
+const loadGraph = async (appId: string) => {
+	return new Promise((resolve, reject) => {
+		let db;
+		const request = indexedDB.open(`${appId}-cache`);
+
+		request.onerror = (event) => {
+			console.error("Error opening database");
+			console.error(event);
+			reject(event);
+		};
+		request.onsuccess = async (event) => {
+			console.log("Success!");
+			db = event.target.result;
+
+			const results = [];
+
+			const objectStore = await db.transaction("file").objectStore("file");
+
+			objectStore.openCursor().onsuccess = (event) => {
+				const cursor = event.target.result;
+				if (cursor) {
+					// console.log("Name for SSN " + cursor.key + " is " + JSON.stringify(cursor.value));
+
+					const metadataObjectStore = db.transaction("metadata").objectStore("metadata");
+					const request = metadataObjectStore.get(cursor.value.hash);
+					request.onsuccess = (event) => {
+						const metadata = event.target.result;
+						// console.log(metadata);
+						const result = { file: cursor.key, ...metadata }; // Append file key to metadata
+						results.push(result); // Store the result in the array
+					};
+
+					cursor.continue();
+				} else {
+					console.log("No more entries!");
+					resolve(results); // Resolve the promise with the results array
+				}
+			};
+		};
+	});
+}
+
+
 export default class OllamaPlugin extends Plugin {
 	settings: OllamaPluginSettings;
 
 	async onload() {
 		await this.loadSettings();
 
-		const graph = await this.loadGraph();
+		const graph = await loadGraph(this.app.appId);
 		console.log("graph: ", graph)
 
 		// This creates an icon in the left ribbon.
@@ -93,52 +136,6 @@ export default class OllamaPlugin extends Plugin {
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
-
-	async loadGraph() {
-		console.log("Loading graph");
-
-		const { appId } = window.global.app;
-
-		return new Promise((resolve, reject) => {
-			let db;
-			const request = indexedDB.open(`${appId}-cache`);
-
-			request.onerror = (event) => {
-				console.error("Error opening database");
-				console.error(event);
-				reject(event);
-			};
-			request.onsuccess = async (event) => {
-				console.log("Success!");
-				db = event.target.result;
-
-				const results = [];
-
-				const objectStore = await db.transaction("file").objectStore("file");
-
-				objectStore.openCursor().onsuccess = (event) => {
-					const cursor = event.target.result;
-					if (cursor) {
-						// console.log("Name for SSN " + cursor.key + " is " + JSON.stringify(cursor.value));
-
-						const metadataObjectStore = db.transaction("metadata").objectStore("metadata");
-						const request = metadataObjectStore.get(cursor.value.hash);
-						request.onsuccess = (event) => {
-							const metadata = event.target.result;
-							// console.log(metadata);
-							const result = { file: cursor.key, ...metadata }; // Append file key to metadata
-							results.push(result); // Store the result in the array
-						};
-
-						cursor.continue();
-					} else {
-						console.log("No more entries!");
-						resolve(results); // Resolve the promise with the results array
-					}
-				};
-			};
-		});
 	}
 
 	async saveSettings() {
