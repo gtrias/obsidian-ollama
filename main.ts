@@ -1,23 +1,29 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin } from 'obsidian';
+
+import Neo4jSettingsTab from './settings_tabs/neo4j_settings_tab';
 
 // Remember to rename these classes and interfaces!
 
-interface MyPluginSettings {
-	mySetting: string;
+interface OllamaPluginSettings {
+	neo4jUrl: string;
+	neo4jUser: string;
+	neo4jPassword: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+const DEFAULT_SETTINGS: OllamaPluginSettings = {
+	neo4jUrl: "",
+	neo4jUser: "",
+	neo4jPassword: "",
 }
 
 export default class OllamaPlugin extends Plugin {
-	settings: MyPluginSettings;
+	settings: OllamaPluginSettings;
 
 	async onload() {
+		await this.loadSettings();
+
 		const graph = await this.loadGraph();
 		console.log("graph: ", graph)
-
-		await this.loadSettings();
 
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
@@ -28,8 +34,8 @@ export default class OllamaPlugin extends Plugin {
 		ribbonIconEl.addClass('my-plugin-ribbon-class');
 
 		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
+		// const statusBarItemEl = this.addStatusBarItem();
+		// statusBarItemEl.setText('ollama');
 
 		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
@@ -68,8 +74,8 @@ export default class OllamaPlugin extends Plugin {
 			}
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		// This adds a settings tab so the user can configure neo4j settings
+		this.addSettingTab(new Neo4jSettingsTab(this.app, this));
 
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
@@ -153,31 +159,5 @@ class SampleModal extends Modal {
 	onClose() {
 		const {contentEl} = this;
 		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: OllamaPlugin;
-
-	constructor(app: App, plugin: OllamaPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
 	}
 }
