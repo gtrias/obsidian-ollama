@@ -21,7 +21,7 @@ const initializeNeo4j = async ({
 		MERGE (note:Note {id: row.file})
 		ON CREATE SET note.file = row.file
 		FOREACH (tag IN row.tags |
-			MERGE (t:Tag {name: tag.tag})
+			MERGE (t:Tag {id: tag.tag})
 			MERGE (note)-[:TAGGED]->(t)
 		)
 		FOREACH (heading IN row.headings |

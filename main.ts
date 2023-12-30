@@ -22,7 +22,9 @@ export default class OllamaPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		const graph = await loadGraph(this.app.appId);
+		const { appId } = this.app
+
+		const graph = await loadGraph(appId);
 		console.log("graph: ", graph);
 
 		const { neo4jUrl, neo4jUser, neo4jPassword } = this.settings;
