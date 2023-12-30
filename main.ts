@@ -31,6 +31,7 @@ export default class OllamaPlugin extends Plugin {
 			url: neo4jUrl,
 			username: neo4jUser,
 			password: neo4jPassword,
+			data: graph,
 		});
 
 		// This creates an icon in the left ribbon.
