@@ -32,8 +32,8 @@ const initializeNeo4j = async ({
 					MERGE (note)-[:LINKED]->(l:Note {id: link.link})))
 		`;
 
-		console.log("Running query: ", query);
-		console.log("With data: ", data);
+	console.log("Running query: ", query);
+	console.log("With data: ", data);
 	await graph.query(query, { data: data });
 	// Refresh schema
 	await graph.refreshSchema();

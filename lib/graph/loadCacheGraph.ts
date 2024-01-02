@@ -1,6 +1,10 @@
-const loadGraph = async (appId: string) => {
+type graphFile = {
+	file: string;
+};
+
+const loadGraph = async (appId: string): Promise<graphFile[]> => {
 	return new Promise((resolve, reject) => {
-		let db;
+		let db: IDBDatabase;
 		const request = indexedDB.open(`${appId}-cache`);
 
 		request.onerror = (event) => {
@@ -8,17 +12,21 @@ const loadGraph = async (appId: string) => {
 			console.error(event);
 			reject(event);
 		};
-		request.onsuccess = async (event) => {
+		request.onsuccess = async (event: {
+			target: { result: IDBDatabase };
+		}) => {
 			console.log("Success!");
 			db = event.target.result;
 
-			const results = [];
+			const results: graphFile[] = [];
 
 			const objectStore = await db
 				.transaction("file")
 				.objectStore("file");
 
-			objectStore.openCursor().onsuccess = (event) => {
+			objectStore.openCursor().onsuccess = (event: {
+				target: { result: IDBCursor };
+			}) => {
 				const cursor = event.target.result;
 				if (cursor) {
 					// console.log("Name for SSN " + cursor.key + " is " + JSON.stringify(cursor.value));

@@ -3,6 +3,7 @@ import { App, Editor, MarkdownView, Modal, Notice, Plugin } from "obsidian";
 import Neo4jSettingsTab from "./settings_tabs/neo4jSettingsTab";
 import loadGraph from "./lib/graph/loadCacheGraph";
 import { initializeNeo4j } from "lib/graph/neo4j";
+import { embedFiles } from "lib/embeddings"
 
 interface OllamaPluginSettings {
 	neo4jUrl: string;
@@ -22,7 +23,7 @@ export default class OllamaPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		const { appId } = this.app
+		const { appId, vault } = this.app
 
 		const graph = await loadGraph(appId);
 		console.log("graph: ", graph);
@@ -35,6 +36,8 @@ export default class OllamaPlugin extends Plugin {
 			password: neo4jPassword,
 			data: graph,
 		});
+
+		embedFiles(graph.map((row) => row.file), vault.adapter.getBasePath());
 
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon(
